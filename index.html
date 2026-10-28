@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIC Microcontroller Architecture - Interactive Lecture</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            dark: '#0B0F17',
+                            card: '#151C28',
+                            border: '#232D3F',
+                            accent: '#00F0FF',
+                            emerald: '#10B981',
+                            purple: '#A855F7',
+                            amber: '#F59E0B',
+                            danger: '#EF4444'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0B0F17;
+            color: #E2E8F0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .glow-accent {
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
+        }
+        .glow-emerald {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.25);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #151C28;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #232D3F;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #00F0FF;
+        }
+        @keyframes pulse-fast {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .animate-pulse-fast {
+            animation: pulse-fast 0.8s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-brand-accent selection:text-black">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="border-b border-brand-border bg-brand-card/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-accent to-blue-600 flex items-center justify-center text-black font-bold text-xl shadow-lg shadow-brand-accent/20">
+                    <i class="fa-solid fa-microchip"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg tracking-wide text-white flex items-center gap-2">
+                        PIC <span class="text-brand-accent font-mono text-sm px-2 py-0.5 rounded bg-brand-accent/10 border border-brand-accent/30">MCU 8-BIT</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Interactive Microcontroller Architecture Lecture</p>
+                </div>
+            </div>
+
+            <!-- Global Navigation Tabs -->
+            <nav class="hidden md:flex items-center gap-1 bg-brand-dark p-1.5 rounded-xl border border-brand-border">
+                <button onclick="switchTab('modules')" id="nav-modules" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 bg-brand-accent text-black shadow-md">
+                    <i class="fa-solid fa-book-open mr-2"></i>Lectures
+                </button>
+                <button onclick="switchTab('simulators')" id="nav-simulators" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition-all duration-200">
+                    <i class="fa-solid fa-flask mr-2"></i>Simulators
+                </button>
+                <button onclick="switchTab('quiz')" id="nav-quiz" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold text-slate-400 hover:text-white transition-all duration-200">
+                    <i class="fa-solid fa-graduation-cap mr-2"></i>Knowledge Check
+                </button>
+            </nav>
+
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400 hidden sm:inline-block">Status:</span>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Simulation Active
+                </span>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation -->
+        <div class="flex md:hidden border-t border-brand-border bg-brand-dark p-2 justify-around">
+            <button onclick="switchTab('modules')" id="mobile-nav-modules" class="px-3 py-1.5 text-xs font-bold rounded bg-brand-accent text-black">Lectures</button>
+            <button onclick="switchTab('simulators')" id="mobile-nav-simulators" class="px-3 py-1.5 text-xs font-bold rounded text-slate-400">Simulators</button>
+            <button onclick="switchTab('quiz')" id="mobile-nav-quiz" class="px-3 py-1.5 text-xs font-bold rounded text-slate-400">Quiz</button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+
+        <!-- ================= SECTION 1: LECTURE MODULES ================= -->
+        <section id="section-modules" class="space-y-6">
+            <!-- Module Sub-Tabs -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar border-b border-brand-border">
+                <button onclick="switchModule(1)" id="mod-btn-1" class="mod-tab-btn flex-shrink-0 px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 bg-brand-card text-brand-accent border border-brand-accent/40">
+                    <span class="w-6 h-6 rounded-lg bg-brand-accent/20 flex items-center justify-center font-mono text-xs">1</span>
+                    CPU & Registers (W, STATUS)
+                </button>
+                <button onclick="switchModule(2)" id="mod-btn-2" class="mod-tab-btn flex-shrink-0 px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 bg-brand-card text-slate-400 hover:text-white border border-brand-border">
+                    <span class="w-6 h-6 rounded-lg bg-brand-border flex items-center justify-center font-mono text-xs">2</span>
+                    Execution, Jumps & Subroutines
+                </button>
+                <button onclick="switchModule(3)" id="mod-btn-3" class="mod-tab-btn flex-shrink-0 px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 bg-brand-card text-slate-400 hover:text-white border border-brand-border">
+                    <span class="w-6 h-6 rounded-lg bg-brand-border flex items-center justify-center font-mono text-xs">3</span>
+                    Stack, PC & Interrupts
+                </button>
+                <button onclick="switchModule(4)" id="mod-btn-4" class="mod-tab-btn flex-shrink-0 px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 bg-brand-card text-slate-400 hover:text-white border border-brand-border">
+                    <span class="w-6 h-6 rounded-lg bg-brand-border flex items-center justify-center font-mono text-xs">4</span>
+                    I/O Ports (TRIS & Pull-ups)
+                </button>
+                <button onclick="switchModule(5)" id="mod-btn-5" class="mod-tab-btn flex-shrink-0 px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 bg-brand-card text-slate-400 hover:text-white border border-brand-border">
+                    <span class="w-6 h-6 rounded-lg bg-brand-border flex items-center justify-center font-mono text-xs">5</span>
+                    Peripherals (Comm, ADC, EEPROM, Timers)
+                </button>
+            </div>
+
+            <!-- MODULE 1 CONTENT -->
+            <div id="module-content-1" class="module-card grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-brand-card rounded-2xl p-6 border border-brand-border space-y-4">
+                        <div class="flex items-center justify-between border-b border-brand-border pb-4">
+                            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-microchip text-brand-accent"></i> What is the W (Working) Register?
+                            </h2>
+                            <span class="text-xs font-mono bg-brand-accent/10 text-brand-accent border border-brand-accent/20 px-2.5 py-1 rounded-full">Accumulator</span>
+                        </div>
+                        <p class="text-slate-300 leading-relaxed text-sm">
+                            The <strong class="text-white font-mono">W</strong> register stands for <strong>Working Register</strong>. It is a core 8-bit CPU register used by the Arithmetic Logic Unit (ALU) to hold one of the operands during processing. Following an operation, the ALU can also write the computation result directly back into the <span class="font-mono text-brand-accent">W</span> register.
+                        </p>
+                        <div class="p-4 rounded-xl bg-brand-dark/60 border border-brand-border flex items-start gap-3">
+                            <i class="fa-solid fa-circle-info text-brand-accent text-lg mt-0.5"></i>
+                            <p class="text-xs text-slate-400 leading-normal">
+                                <strong>Architectural Note:</strong> While Microchip uses the term "Working Register" for PIC microcontrollers, in most other computer architectures this register is referred to as the <strong>Accumulator</strong>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-brand-card rounded-2xl p-6 border border-brand-border space-y-4">
+                        <div class="flex items-center justify-between border-b border-brand-border pb-4">
+                            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                                <i class="fa-solid fa-flag text-brand-purple"></i> The Status Register: STATUS
+                            </h2>
+                            <span class="text-xs font-mono bg-brand-purple/10 text-brand-purple border border-brand-purple/20 px-2.5 py-1 rounded-full">Flags</span>
+                        </div>
+                        <p class="text-slate-300 leading-relaxed text-sm">
+                            The <strong class="text-white font-mono">STATUS</strong> register contains status bits known as <strong>flags</strong>. These bits reflect the outcome of ALU operations:
+                        </p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                            <div class="p-4 rounded-xl bg-brand-dark/80 border border-brand-accent/30 space-y-1">
+                                <div class="font-mono font-bold text-brand-accent text-lg">Z (Zero Flag)</div>
+                                <div class="text-xs font-semibold text-slate-300">Zero Result Flag</div>
+                                <p class="text-xs text-slate-400 pt-1">Set to <code class="text-brand-accent">1</code> if the operation result is zero. During subtraction, <code class="text-brand-accent">Z=1</code> indicates both operands were equal.</p>
+                            </div>
+
+                            <div class="p-4 rounded-xl bg-brand-dark/80 border border-brand-emerald/30 space-y-1">
+                                <div class="font-mono font-bold text-brand-emerald text-lg">C (Carry Flag)</div>
+                                <div class="text-xs font-semibold text-slate-300">Carry Out Flag</div>
+                                <p class="text-xs text-slate-400 pt-1">Set to <code class="text-brand-emerald">1</code> if an arithmetic operation causes a carry out from the most significant bit (Bit 7).</p>
+                            </div>
+
+                            <div class="p-4 rounded-xl bg-brand-dark/80 border border-brand-amber/30 space-y-1">
+                                <div class="font-mono font-bold text-brand-amber text-lg">DC (Digit Carry)</div>
+                                <div class="text-xs font-semibold text-slate-300">Half-Carry Flag</div>
+                                <p class="text-xs text-slate-400 pt-1">Set to <code class="text-brand-amber">1</code> if a carry occurs from the lower nibble to the upper nibble (from Bit 3 to Bit 4).</p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-brand-dark/40 border border-brand-border text-xs text-slate-300 space-y-2">
+                            <p><strong>Flag Affect Rules:</strong> Arithmetic instructions (ADD, SUB) affect all three status flags (<span class="font-mono text-white">Z, DC, C</span>), whereas logical operations (AND, XOR) affect only the <span class="font-mono text-white">Z</span> flag.</p>
+                            <p class="text-slate-400"><em>Note:</em> When an instruction "affects" a flag, it updates its value depending on the operation's result (clearing it to 0 or setting it to 1).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar Interactive Widget Quick Access -->
+                <div class="space-y-6">
+                    <div class="bg-gradient-to-br from-brand-card to-brand-dark p-6 rounded-2xl border border-brand-accent/30 space-y-4">
+                        <div class="flex items-center gap-2 text-brand-accent font-bold">
+                            <i class="fa-solid fa-bolt"></i>
+                            <span>Interactive Lab</span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Test W and STATUS register behavior in real time with our ALU simulator! Run addition, subtraction, or logical AND instructions and observe flag updates.
+                        </p>
+                        <button onclick="switchTab('simulators'); setSimTab('alu');" class="w-full py-2.5 px-4 rounded-xl bg-brand-accent text-black font-bold text-sm shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-play"></i> Open ALU Simulator
+                        </button>
+                    </div>
+
+                    <div class="bg-brand-card p-5 rounded-2xl border border-brand-border space-y-3">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-key text-brand-amber"></i> Key Concepts
+                        </h3>
+                        <ul class="text-xs text-slate-400 space-y-2 font-mono">
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-angle-right text-brand-amber mt-0.5"></i>
+                                <span><strong>Flag:</strong> A single status bit (1 or 0) indicating a specific CPU condition.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-angle-right text-brand-amber mt-0.5"></i>
+                                <span><strong>Nibble:</strong> A 4-bit half-byte block.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-angle-right text-brand-amber mt-0.5"></i>
+                                <span><strong>Program Testing:</strong> Reading status flags to make conditional jump decisions.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 2 CONTENT -->
+            <div id="module-content-2" class="module-card hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-brand-card rounded-2xl p-6 border border-brand-border space-y-4">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2 border-b border-brand-border pb-4">
+                            <i class="fa-solid fa-route text-brand-accent"></i> Program Execution & Branching (Conditional vs Unconditional)
+                        </h2>
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            Under normal execution, instructions are fetched and executed sequentially. A <strong>branch or jump</strong> alters this normal sequential flow.
+                        </p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                            <div class="p-4 rounded-xl bg-brand-dark border border-brand-border space-y-2">
+                                <h3 class="text-sm font-bold text-brand-accent flex items-center gap-2">
+                                    <i class="fa-solid fa-code-branch"></i> Conditional Jumps
+                                </h3>
+                                <p class="text-xs text-slate-400">Executed only after testing a specific condition (e.g., checking if flag $Z=1$). If true, execution branches to a new target; if false, sequential execution continues.</p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-brand-dark border border-brand-border space-y-2">
+                                <h3 class="text-sm font-bold text-brand-purple flex items-center gap-2">
+                                    <i class="fa-solid fa-arrow-right-long"></i> Unconditional Jumps
+                                </h3>
+                                <p class="text-xs text-slate-400">Execution branches directly without testing any conditions. Examples include calling a subroutine (<code class="text-brand-purple">CALL</code>) or jumping directly via <code class="text-brand-purple">GOTO</code>.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-brand-card rounded-2xl p-6 border border-brand-border space-y-4">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2 border-b border-brand-border pb-4">
+                            <i class="fa-solid fa-cubes text-brand-emerald"></i> Subroutines & Code Modularity
+                        </h2>
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            Programs are generally structured into a <strong>main program</strong> and multiple reusable <strong>subroutines</strong>.
+                        </p>
+                        <div class="p-4 rounded-xl bg-brand-dark border border-brand-border space-y-3 text-xs text-slate-300">
+                            <p><strong class="text-brand-emerald">Benefits of Subroutines:</strong></p>
+                            <ul class="list-disc list-inside space-y-1 text-slate-400">
+                                <li><strong>Saves Flash Memory:</strong> Frequently used routines are written once and invoked anywhere in the program.</li>
+                                <li><strong>Simplified Code Maintenance:</strong> Encourages clean, modular program design.</li>
+                            </ul>
+                            <p class="text-slate-400 pt-2 border-t border-brand-border/50">Subroutine calling (<code class="text-brand-emerald">CALL</code>) and returning (<code class="text-brand-emerald">RETURN / RETFIE</code>) rely on the hardware <strong>Stack</strong>.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-brand-card p-6 rounded-2xl border border-brand-border space-y-3">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-diagram-project text-brand-accent"></i> Execution Flow Example
+                        </h3>
+                        <div class="p-4 bg-brand-dark rounded-xl text-xs font-mono space-y-2 border border-brand-border">
+                            <div class="text-slate-400">// Main Program</div>
+                            <div class="text-white">MAIN:</div>
+                            <div class="text-slate-300 pl-4">MOVLW 0x05</div>
+                            <div class="text-brand-accent pl-4 font-bold">CALL DELAY_SUB</div>
+                            <div class="text-slate-300 pl-4">BSF PORTB, 0</div>
+                            <div class="text-slate-400 pt-2">// Subroutine</div>
+                            <div class="text-brand-emerald">DELAY_SUB:</div>
+                            <div class="text-slate-300 pl-4">... delay loop ...</div>
+                            <div class="text-brand-emerald pl-4 font-bold">RETURN</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 3 CONTENT -->
+            <div id="module-content-3" class="module-card hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-brand-card rounded-2xl p-6 border border-brand-border space-y-4">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2 border-b border-brand-border pb-4">
+                            <i class="fa-solid fa-layer-group text-brand-accent"></i> Hardware Stack & Program Counter (PC)
+                        </h2>
+                        
+                        <div class="space-y-3 text-sm text-slate-300 leading-relaxed">
+                            <p>
+                                <strong class="text-white">Program Counter (PC):</strong> A 13-bit CPU register that controls the execution sequence by holding the memory address of the next instruction to fetch. On Reset, the PC initializes to address <code class="text-brand-accent font-mono">0000h</code>.
+                            </p>
+                            <p>
+                                <strong class="text-white">Hardware Stack:</strong> A dedicated internal memory block consisting of <strong>8 levels of 13-bit registers</strong>. It automatically saves the PC return address during subroutine calls or interrupt triggers.
+                            </p>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-brand-dark border border-brand-border space-y-2 text-xs">
+                            <div class="font-bold text-brand-accent">LIFO Operation (Last In, First Out):</div>
+                            <ul class="list-disc list-inside text-slate-400 space-y-1">
+                                <li>On <code class="text-white">CALL</code>: The current PC return address is pushed to Level 1, shifting previous entries down one level.</li>
+                                <li>On <code class="text-white">RETURN</code>: The address at Level 1 is popped back into PC, shifting all lower entries up one level.</li>
+                                <li><strong>Capacity:</strong> Supports up to 8 nested subroutine levels!</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="bg-brand-card rounded-2xl p-6 border border-brand-border space-y-4">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2 border-b border-brand-border pb-4">
+                            <i class="fa-solid fa-bolt text-brand-amber"></i> Interrupts & Vector Address
+                        </h2>
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            An interrupt allows external events (sensors, timers, button pushes) to instantly suspend the main program loop and execute an <strong>Interrupt Service Routine (ISR)</strong>.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                            <div class="p-4 rounded-xl bg-brand-dark border border-brand-amber/30 space-y-1">
+                                <span class="font-bold text-brand-amber block text-sm">Interrupt Vector Address</span>
+                                <p class="text-slate-400">On PIC microcontrollers, the fixed interrupt vector location is address <code class="text-brand-amber font-mono">0004h</code> in program memory.</p>
+                            </div>
+                            <div class="p-4 rounded-xl bg-brand-dark border border-brand-border space-y-1">
+                                <span class="font-bold text-white block text-sm">Interrupt Masking</span>
+                                <p class="text-slate-400">Interrupt sources can be selectively enabled or masked (disabled) via dedicated enable bits in Special Function Registers (SFRs).</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-gradient-to-br from-brand-card to-brand-dark p-6 rounded-2xl border border-brand-emerald/30 space-y-4">
+                        <div class="flex items-center gap-2 text-brand-emerald font-bold">
+                            <i class="fa-solid fa-layer-group"></i>
+                            <span>Stack Visualizer</span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Visually inspect the 8 stack levels push and pop PC return addresses during subroutine calls.
+                        </p>
+                        <button onclick="switchTab('simulators'); setSimTab('stack');" class="w-full py-2.5 px-4 rounded-xl bg-brand-emerald text-black font-bold text-sm shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-play"></i> Test Stack Tower
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 4 CONTENT -->
+            <div id="module-content-4" class="module-card hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-brand-card rounded-2xl p-6 border border-brand-border space-y-4">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2 border-b border-brand-border pb-4">
+                            <i class="fa-solid fa-plug text-brand-accent"></i> I/O Ports & Direction Registers (TRIS)
+                        </h2>
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            Input/Output ports enable the microcontroller to interact with external circuits. PIC MCUs feature between 1 and 7 ports (named <span class="font-mono text-brand-accent">PORTA, PORTB, PORTC ... PORTG</span>), each containing 5 to 8 I/O pins.
+                        </p>
+
+                        <div class="p-4 rounded-xl bg-brand-dark border border-brand-accent/30 space-y-3 text-xs">
+                            <h3 class="font-bold text-brand-accent text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-sliders"></i> TRIS Data Direction Registers
+                            </h3>
+                            <p class="text-slate-300">Each port pin direction is controlled by its corresponding bit in the TRIS register (TRISA, TRISB, etc.):</p>
+                            <div class="grid grid-cols-2 gap-3 pt-1 font-mono text-center">
+                                <div class="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                                    <span class="text-base font-bold">Bit = '0'</span>
+                                    <div class="text-[11px] text-slate-300 mt-1">OUTPUT Mode</div>
+                                </div>
+                                <div class="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400">
+                                    <span class="text-base font-bold">Bit = '1'</span>
+                                    <div class="text-[11px] text-slate-300 mt-1">INPUT Mode</div>
+                                </div>
+                            </div>
+                            <p class="text-slate-400 italic">Upon System Reset, all TRIS bits default to '1' (Input mode) for hardware safety.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-brand-card rounded-2xl p-6 border border-brand-border space-y-4">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2 border-b border-brand-border pb-4">
+                            <i class="fa-solid fa-toggle-on text-brand-purple"></i> Internal Weak Pull-up Resistors
+                        </h2>
+                        <p class="text-slate-300 text-sm leading-relaxed">
+                            Weak pull-up resistors ensure input pins default to a high logic level (<code class="text-brand-accent">'1'</code>) when floating or connected to open switches.
+                        </p>
+                        <div class="p-4 rounded-xl bg-brand-dark border border-brand-border text-xs text-slate-300 space-y-2">
+                            <p>• Certain ports (e.g., PORTB) feature software-configurable internal pull-up resistors.</p>
+                            <p>• When a pin is reconfigured as an <strong>output</strong>, its internal pull-up resistor is automatically disabled.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-gradient-to-br from-brand-card to-brand-dark p-6 rounded-2xl border border-brand-accent/30 space-y-4">
+                        <div class="flex items-center gap-2 text-brand-accent font-bold">
+                            <i class="fa-solid fa-sliders"></i>
+                            <span>GPIO & TRIS Configurator</span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Toggle TRIS bits, simulate pin inputs, and verify LED indicator states and pull-up behaviors!
+                        </p>
+                        <button onclick="switchTab('simulators'); setSimTab('gpio');" class="w-full py-2.5 px-4 rounded-xl bg-brand-accent text-black font-bold text-sm shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-play"></i> Launch Configurator
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 5 CONTENT -->
+            <div id="module-content-5" class="module-card hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-brand-card rounded-2xl p-6 border border-brand-border space-y-4">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2 border-b border-brand-border pb-4">
+                            <i class="fa-solid fa-network-wired text-brand-accent"></i> Serial vs Parallel Communication & Peripherals
+                        </h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                            <div class="p-4 rounded-xl bg-brand-dark border border-brand-border space-y-2">
+                                <span class="font-bold text-brand-accent text-sm block">Serial I/O Port</span>
+                                <p class="text-slate-300">Transmits data sequentially, <strong>bit-by-bit</strong>. Requires only 2 or 3 communication lines.</p>
+                                <p class="text-slate-400"><strong>Data Rate:</strong> Measured in <em>bits per second (bps)</em> or <strong>Baud rate</strong>. 1 bit/s = 1 Baud (e.g., 100 kilobaud = 100 Kbit/s).</p>
+                            </div>
+
+                            <div class="p-4 rounded-xl bg-brand-dark border border-brand-border space-y-2">
+                                <span class="font-bold text-brand-purple text-sm block">Parallel Slave Port (PSP)</span>
+                                <p class="text-slate-300">Interfaces directly with external microprocessors over an <strong>8-bit data bus</strong> (typically PORTD).</p>
+                                <p class="text-slate-400">Transmits all 8 bits simultaneously for high-speed short-distance parallel data transfers.</p>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-brand-border pt-4 space-y-3">
+                            <h3 class="font-bold text-white text-sm">On-Chip Peripherals Summary:</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                                <div class="p-3 bg-brand-dark rounded-xl border border-brand-border">
+                                    <div class="font-bold text-brand-amber mb-1"><i class="fa-solid fa-clock mr-1"></i> Timers</div>
+                                    <p class="text-slate-400">Counters incremented by clock pulses or external signals. Precision depends on timer bit width.</p>
+                                </div>
+                                <div class="p-3 bg-brand-dark rounded-xl border border-brand-border">
+                                    <div class="font-bold text-brand-emerald mb-1"><i class="fa-solid fa-database mr-1"></i> EEPROM Memory</div>
+                                    <p class="text-slate-400">Non-volatile data storage up to 256 bytes. Retains data for <strong>40 years</strong> across 1,000,000 write cycles.</p>
+                                </div>
+                                <div class="p-3 bg-brand-dark rounded-xl border border-brand-border">
+                                    <div class="font-bold text-brand-accent mb-1"><i class="fa-solid fa-wave-square mr-1"></i> ADC Module</div>
+                                    <p class="text-slate-400">Converts analog voltages (e.g., 1V–4V range) into binary digital words for processing.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-brand-card rounded-2xl p-6 border border-brand-border space-y-3">
+                        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-coins text-brand-amber"></i> Microcontroller Selection Criteria
+                        </h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            While all PIC microcontrollers include timers and I/O ports by default, optional peripherals like ADC, EEPROM, and serial ports vary across product lines. Selecting an oversized MCU with unused peripherals unnecessarily increases total hardware cost.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-gradient-to-br from-brand-card to-brand-dark p-6 rounded-2xl border border-brand-purple/30 space-y-4">
+                        <div class="flex items-center gap-2 text-brand-purple font-bold">
+                            <i class="fa-solid fa-network-wired"></i>
+                            <span>Serial vs Parallel Visualizer</span>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Run animated side-by-side simulations comparing 8-bit parallel bus transfers against single-line serial clocking!
+                        </p>
+                        <button onclick="switchTab('simulators'); setSimTab('comm');" class="w-full py-2.5 px-4 rounded-xl bg-brand-purple text-white font-bold text-sm shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-play"></i> Compare Transfers
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= SECTION 2: INTERACTIVE SIMULATORS ================= -->
+        <section id="section-simulators" class="hidden space-y-6">
+            <!-- Simulator Sub-Tabs -->
+            <div class="flex items-center gap-2 border-b border-brand-border pb-3">
+                <button onclick="setSimTab('alu')" id="sim-tab-alu" class="sim-nav-btn px-4 py-2 rounded-xl font-medium text-sm bg-brand-accent text-black font-bold">
+                    <i class="fa-solid fa-calculator mr-1"></i> ALU & STATUS Flags
+                </button>
+                <button onclick="setSimTab('stack')" id="sim-tab-stack" class="sim-nav-btn px-4 py-2 rounded-xl font-medium text-sm bg-brand-card text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-layer-group mr-1"></i> Stack & CALL / RETURN
+                </button>
+                <button onclick="setSimTab('gpio')" id="sim-tab-gpio" class="sim-nav-btn px-4 py-2 rounded-xl font-medium text-sm bg-brand-card text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-sliders mr-1"></i> GPIO & TRIS Configurator
+                </button>
+                <button onclick="setSimTab('comm')" id="sim-tab-comm" class="sim-nav-btn px-4 py-2 rounded-xl font-medium text-sm bg-brand-card text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-right-left mr-1"></i> Serial vs Parallel
+                </button>
+            </div>
+
+            <!-- SIMULATOR 1: ALU & STATUS FLAGS -->
+            <div id="sim-panel-alu" class="sim-panel bg-brand-card rounded-2xl p-6 border border-brand-border space-y-6">
+                <div>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-calculator text-brand-accent"></i> ALU & STATUS Flags Simulator
+                    </h3>
+                    <p class="text-xs text-slate-400">Set values for the Working register W and Operand memory, select an opcode, and execute.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Controls -->
+                    <div class="space-y-4 bg-brand-dark p-5 rounded-xl border border-brand-border">
+                        <div>
+                            <label class="text-xs font-bold text-slate-300 block mb-1">W Register (Dec: 0 - 255)</label>
+                            <input type="number" id="alu-val-w" min="0" max="255" value="200" class="w-full bg-brand-card border border-brand-border rounded-lg px-3 py-2 text-brand-accent font-mono font-bold focus:outline-none focus:border-brand-accent">
+                        </div>
+
+                        <div>
+                            <label class="text-xs font-bold text-slate-300 block mb-1">Operand / File (Dec: 0 - 255)</label>
+                            <input type="number" id="alu-val-op" min="0" max="255" value="60" class="w-full bg-brand-card border border-brand-border rounded-lg px-3 py-2 text-white font-mono font-bold focus:outline-none focus:border-brand-accent">
+                        </div>
+
+                        <div>
+                            <label class="text-xs font-bold text-slate-300 block mb-1">Instruction</label>
+                            <select id="alu-op" class="w-full bg-brand-card border border-brand-border rounded-lg px-3 py-2 text-slate-200 font-mono text-sm focus:outline-none">
+                                <option value="ADD">ADDWF (Addition: W + Op)</option>
+                                <option value="SUB">SUBWF (Subtraction: Op - W)</option>
+                                <option value="AND">ANDWF (Bitwise AND: W & Op)</option>
+                            </select>
+                        </div>
+
+                        <button onclick="runALU()" class="w-full py-2.5 rounded-xl bg-brand-accent text-black font-bold hover:brightness-110 transition-all">
+                            Execute Instruction
+                        </button>
+                    </div>
+
+                    <!-- Output & Flags Display -->
+                    <div class="md:col-span-2 space-y-6 flex flex-col justify-between">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="p-4 rounded-xl bg-brand-dark border border-brand-border space-y-1">
+                                <span class="text-xs text-slate-400">Hexadecimal Result</span>
+                                <div id="alu-res-hex" class="text-2xl font-mono font-bold text-brand-accent">0x00</div>
+                                <div id="alu-res-bin" class="text-xs font-mono text-slate-400">00000000</div>
+                            </div>
+                            <div class="p-4 rounded-xl bg-brand-dark border border-brand-border space-y-1">
+                                <span class="text-xs text-slate-400">Decimal Value</span>
+                                <div id="alu-res-dec" class="text-2xl font-mono font-bold text-white">0</div>
+                                <div id="alu-overflow-note" class="text-[11px] text-brand-amber hidden">Overflow (>255) occurred</div>
+                            </div>
+                        </div>
+
+                        <!-- Flags Monitor -->
+                        <div class="p-5 rounded-xl bg-brand-dark border border-brand-border space-y-3">
+                            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider block">STATUS Register Flags Output:</span>
+                            <div class="grid grid-cols-3 gap-3 text-center">
+                                <div id="flag-box-z" class="p-3 rounded-lg bg-brand-card border border-brand-border transition-all">
+                                    <div class="font-mono font-bold text-lg text-slate-500">Z</div>
+                                    <div id="flag-val-z" class="font-mono text-xs text-slate-400">0</div>
+                                    <div class="text-[10px] text-slate-500 mt-1">Zero Flag</div>
+                                </div>
+                                <div id="flag-box-c" class="p-3 rounded-lg bg-brand-card border border-brand-border transition-all">
+                                    <div class="font-mono font-bold text-lg text-slate-500">C</div>
+                                    <div id="flag-val-c" class="font-mono text-xs text-slate-400">0</div>
+                                    <div class="text-[10px] text-slate-500 mt-1">Carry Flag</div>
+                                </div>
+                                <div id="flag-box-dc" class="p-3 rounded-lg bg-brand-card border border-brand-border transition-all">
+                                    <div class="font-mono font-bold text-lg text-slate-500">DC</div>
+                                    <div id="flag-val-dc" class="font-mono text-xs text-slate-400">0</div>
+                                    <div class="text-[10px] text-slate-500 mt-1">Digit Carry</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SIMULATOR 2: STACK & CALL/RETURN -->
+            <div id="sim-panel-stack" class="sim-panel hidden bg-brand-card rounded-2xl p-6 border border-brand-border space-y-6">
+                <div>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-brand-emerald"></i> 8-Level Hardware Stack Visualizer
+                    </h3>
+                    <p class="text-xs text-slate-400">Observe program counter (PC) return address pushes and pops during nested subroutine calls.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                    <!-- Controls -->
+                    <div class="space-y-4 bg-brand-dark p-5 rounded-xl border border-brand-border">
+                        <div>
+                            <label class="text-xs font-bold text-slate-300 block mb-1">Current Program Counter (PC Hex Address)</label>
+                            <input type="text" id="stack-pc-input" value="0x01A2" class="w-full bg-brand-card border border-brand-border rounded-lg px-3 py-2 text-brand-emerald font-mono font-bold focus:outline-none">
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button onclick="pushStack()" class="flex-1 py-2.5 rounded-xl bg-brand-emerald text-black font-bold hover:brightness-110 transition-all flex items-center justify-center gap-1.5 text-sm">
+                                <i class="fa-solid fa-arrow-down-to-line"></i> CALL (Push)
+                            </button>
+                            <button onclick="popStack()" class="flex-1 py-2.5 rounded-xl bg-brand-purple text-white font-bold hover:brightness-110 transition-all flex items-center justify-center gap-1.5 text-sm">
+                                <i class="fa-solid fa-arrow-up-from-line"></i> RETURN (Pop)
+                            </button>
+                        </div>
+
+                        <button onclick="resetStack()" class="w-full py-2 rounded-lg bg-brand-card border border-brand-border text-slate-400 hover:text-white text-xs">
+                            Reset Stack
+                        </button>
+
+                        <div id="stack-status-msg" class="text-xs font-mono p-3 rounded-lg bg-brand-card border border-brand-border text-slate-300">
+                            Stack is currently empty. Ready for subroutine calls.
+                        </div>
+                    </div>
+
+                    <!-- Tower Representation of Stack -->
+                    <div class="space-y-2">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Hardware Stack Architecture (Levels 1 to 8):</span>
+                        <div id="stack-levels-container" class="space-y-1.5 font-mono text-xs">
+                            <!-- 8 Levels generated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SIMULATOR 3: GPIO & TRIS CONFIGURATOR -->
+            <div id="sim-panel-gpio" class="sim-panel hidden bg-brand-card rounded-2xl p-6 border border-brand-border space-y-6">
+                <div>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-brand-accent"></i> GPIO Port & TRIS Configurator (PORTB)
+                    </h3>
+                    <p class="text-xs text-slate-400">Configure direction bits in TRISB (0=Output, 1=Input) and test weak pull-up resistor behavior.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between bg-brand-dark p-4 rounded-xl border border-brand-border">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold text-slate-300">Internal Weak Pull-up Resistors:</span>
+                            <button id="pullup-toggle-btn" onclick="togglePullups()" class="px-3 py-1 rounded-lg bg-brand-card border border-brand-border text-slate-400 font-mono text-xs">
+                                DISABLED
+                            </button>
+                        </div>
+                        <span class="text-xs text-slate-400">Click individual pins to toggle input states</span>
+                    </div>
+
+                    <!-- 8 Pin Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-3" id="gpio-pins-grid">
+                        <!-- Generated via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- SIMULATOR 4: SERIAL VS PARALLEL -->
+            <div id="sim-panel-comm" class="sim-panel hidden bg-brand-card rounded-2xl p-6 border border-brand-border space-y-6">
+                <div>
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-right-left text-brand-purple"></i> Serial vs Parallel Transmission Visualizer
+                    </h3>
+                    <p class="text-xs text-slate-400">Compare bit-by-bit sequential clocking with simultaneous 8-bit bus transfers.</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="flex flex-wrap items-center justify-between gap-4 bg-brand-dark p-4 rounded-xl border border-brand-border">
+                        <div class="flex items-center gap-3">
+                            <label class="text-xs font-bold text-slate-300">Byte to transmit (Hex):</label>
+                            <input type="text" id="comm-byte-input" value="0xA5" maxlength="4" class="w-20 bg-brand-card border border-brand-border rounded px-2 py-1 text-brand-accent font-mono font-bold text-sm">
+                        </div>
+                        <button onclick="startCommSim()" class="px-5 py-2 rounded-xl bg-brand-purple text-white font-bold text-sm hover:brightness-110 transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-play"></i> Simulate Transmission
+                        </button>
+                    </div>
+
+                    <!-- Animation Area -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Serial Visualizer -->
+                        <div class="p-5 rounded-xl bg-brand-dark border border-brand-border space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-brand-accent text-sm">Serial Bus (Single Data Line)</span>
+                                <span id="serial-status" class="text-xs font-mono text-slate-400">Ready</span>
+                            </div>
+                            <div class="h-20 bg-brand-card rounded-lg border border-brand-border flex items-center justify-between px-4 relative overflow-hidden">
+                                <div class="text-xs font-mono text-slate-400">TX</div>
+                                <div id="serial-wire" class="flex-1 h-1 bg-brand-border mx-4 relative">
+                                    <div id="serial-bit-node" class="w-5 h-5 rounded-full bg-brand-accent text-black font-mono font-bold text-[10px] flex items-center justify-center absolute -top-2 left-0 hidden transition-all duration-300">0</div>
+                                </div>
+                                <div class="text-xs font-mono text-slate-400">RX</div>
+                            </div>
+                            <div class="text-xs text-slate-400 font-mono" id="serial-received-bits">Received bits: _ _ _ _ _ _ _ _</div>
+                        </div>
+
+                        <!-- Parallel Visualizer -->
+                        <div class="p-5 rounded-xl bg-brand-dark border border-brand-border space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-brand-purple text-sm">Parallel Bus (8 Lines)</span>
+                                <span id="parallel-status" class="text-xs font-mono text-slate-400">Ready</span>
+                            </div>
+                            <div class="h-20 bg-brand-card rounded-lg border border-brand-border flex items-center justify-between px-4 relative">
+                                <div class="text-xs font-mono text-slate-400">TX</div>
+                                <div class="flex-1 space-y-1 mx-4">
+                                    <div class="h-0.5 bg-brand-purple/40 w-full"></div>
+                                    <div class="h-0.5 bg-brand-purple/40 w-full"></div>
+                                    <div class="h-0.5 bg-brand-purple/40 w-full"></div>
+                                    <div class="h-0.5 bg-brand-purple/40 w-full"></div>
+                                </div>
+                                <div class="text-xs font-mono text-slate-400">RX</div>
+                            </div>
+                            <div class="text-xs text-slate-400 font-mono" id="parallel-received-bits">Received bits: _ _ _ _ _ _ _ _</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= SECTION 3: QUIZ & KNOWLEDGE CHECK ================= -->
+        <section id="section-quiz" class="hidden space-y-6">
+            <div class="bg-brand-card rounded-2xl p-6 border border-brand-border space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-brand-border pb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-graduation-cap text-brand-accent"></i> Knowledge Check & Quiz
+                        </h2>
+                        <p class="text-xs text-slate-400">Questions covering the PIC microcontroller architecture materials.</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right">
+                            <span class="text-xs text-slate-400 block">Current Score</span>
+                            <span id="quiz-score" class="font-mono font-bold text-lg text-brand-accent">0 / 0</span>
+                        </div>
+                        <button onclick="resetQuiz()" class="px-3 py-1.5 rounded-lg bg-brand-dark border border-brand-border text-slate-300 text-xs hover:text-white">
+                            <i class="fa-solid fa-rotate-right mr-1"></i> Reset Quiz
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quiz Container -->
+                <div id="quiz-container" class="space-y-6">
+                    <!-- Dynamically populated via JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-brand-border bg-brand-card/50 py-4 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
+            Interactive Learning Dashboard • Microchip PIC 8-Bit Architecture
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Global Navigation Logic
+        function switchTab(tabId) {
+            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-accent', 'text-black', 'shadow-md');
+                btn.classList.add('text-slate-400');
+            });
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-brand-accent', 'text-black', 'shadow-md');
+                activeBtn.classList.remove('text-slate-400');
+            }
+        }
+
+        // Lecture Module Logic
+        function switchModule(modNum) {
+            document.querySelectorAll('.module-card').forEach(card => card.classList.add('hidden'));
+            document.getElementById(`module-content-${modNum}`).classList.remove('hidden');
+
+            document.querySelectorAll('.mod-tab-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-card', 'text-brand-accent', 'border-brand-accent/40');
+                btn.classList.add('text-slate-400', 'border-brand-border');
+            });
+            const activeModBtn = document.getElementById(`mod-btn-${modNum}`);
+            if (activeModBtn) {
+                activeModBtn.classList.add('bg-brand-card', 'text-brand-accent', 'border-brand-accent/40');
+                activeModBtn.classList.remove('text-slate-400', 'border-brand-border');
+            }
+        }
+
+        // Simulator Sub-Tabs
+        function setSimTab(simId) {
+            document.querySelectorAll('.sim-panel').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`sim-panel-${simId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.sim-nav-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-accent', 'text-black', 'font-bold');
+                btn.classList.add('bg-brand-card', 'text-slate-400');
+            });
+            const activeSimBtn = document.getElementById(`sim-tab-${simId}`);
+            if (activeSimBtn) {
+                activeSimBtn.classList.add('bg-brand-accent', 'text-black', 'font-bold');
+                activeSimBtn.classList.remove('bg-brand-card', 'text-slate-400');
+            }
+        }
+
+        // ================= SIMULATOR 1: ALU & STATUS =================
+        function runALU() {
+            const w = parseInt(document.getElementById('alu-val-w').value) || 0;
+            const op = parseInt(document.getElementById('alu-val-op').value) || 0;
+            const operation = document.getElementById('alu-op').value;
+
+            let result = 0;
+            let carry = 0;
+            let digitCarry = 0;
+
+            if (operation === 'ADD') {
+                result = w + op;
+                carry = result > 255 ? 1 : 0;
+                digitCarry = ((w & 0x0F) + (op & 0x0F)) > 15 ? 1 : 0;
+            } else if (operation === 'SUB') {
+                result = op - w;
+                carry = op >= w ? 1 : 0; // Carry is inverse borrow in PIC
+                digitCarry = (op & 0x0F) >= (w & 0x0F) ? 1 : 0;
+            } else if (operation === 'AND') {
+                result = w & op;
+                carry = 0;
+                digitCarry = 0;
+            }
+
+            const maskedResult = result & 0xFF;
+            const zero = maskedResult === 0 ? 1 : 0;
+
+            // Update DOM
+            document.getElementById('alu-res-hex').innerText = '0x' + maskedResult.toString(16).toUpperCase().padStart(2, '0');
+            document.getElementById('alu-res-bin').innerText = maskedResult.toString(2).padStart(8, '0');
+            document.getElementById('alu-res-dec').innerText = maskedResult;
+
+            document.getElementById('alu-overflow-note').classList.toggle('hidden', result <= 255);
+
+            // Update Flags
+            updateFlagBox('z', zero);
+            updateFlagBox('c', carry);
+            updateFlagBox('dc', digitCarry);
+        }
+
+        function updateFlagBox(flagKey, val) {
+            const box = document.getElementById(`flag-box-${flagKey}`);
+            const valEl = document.getElementById(`flag-val-${flagKey}`);
+            valEl.innerText = val;
+
+            if (val === 1) {
+                box.className = "p-3 rounded-lg bg-brand-accent/20 border border-brand-accent text-brand-accent font-bold scale-105 transition-all";
+            } else {
+                box.className = "p-3 rounded-lg bg-brand-card border border-brand-border text-slate-500 transition-all";
+            }
+        }
+
+        // ================= SIMULATOR 2: STACK =================
+        let stackData = [];
+
+        function renderStack() {
+            const container = document.getElementById('stack-levels-container');
+            container.innerHTML = '';
+
+            for (let i = 8; i >= 1; i--) {
+                const val = stackData[i - 1];
+                const isTop = (i === stackData.length);
+                const levelEl = document.createElement('div');
+
+                levelEl.className = `p-2.5 rounded-lg border flex items-center justify-between ${
+                    isTop 
+                    ? 'bg-brand-emerald/20 border-brand-emerald text-brand-emerald font-bold' 
+                    : val 
+                    ? 'bg-brand-card border-brand-border text-slate-200' 
+                    : 'bg-brand-dark/40 border-brand-border/50 text-slate-600'
+                }`;
+
+                levelEl.innerHTML = `
+                    <span>Level ${i} ${isTop ? '<span class="text-[10px] bg-brand-emerald text-black px-1.5 py-0.5 rounded ml-2 font-bold">TOP</span>' : ''}</span>
+                    <span>${val ? val : '0x0000 (Empty)'}</span>
+                `;
+                container.appendChild(levelEl);
+            }
+        }
+
+        function pushStack() {
+            const pcVal = document.getElementById('stack-pc-input').value;
+            const msg = document.getElementById('stack-status-msg');
+
+            if (stackData.length >= 8) {
+                msg.innerHTML = '<span class="text-brand-danger font-bold"><i class="fa-solid fa-triangle-exclamation"></i> Stack Overflow! Maximum stack limit is 8 levels.</span>';
+                return;
+            }
+
+            stackData.push(pcVal);
+            renderStack();
+
+            // Auto increment PC for demo
+            let num = parseInt(pcVal.replace('0x', ''), 16);
+            document.getElementById('stack-pc-input').value = '0x' + (num + 0x04).toString(16).toUpperCase().padStart(4, '0');
+            msg.innerText = `CALL instruction executed. Return address ${pcVal} pushed to stack.`;
+        }
+
+        function popStack() {
+            const msg = document.getElementById('stack-status-msg');
+            if (stackData.length === 0) {
+                msg.innerText = "Stack is already empty!";
+                return;
+            }
+
+            const popped = stackData.pop();
+            renderStack();
+            document.getElementById('stack-pc-input').value = popped;
+            msg.innerText = `RETURN instruction executed. Restored PC address: ${popped}`;
+        }
+
+        function resetStack() {
+            stackData = [];
+            renderStack();
+            document.getElementById('stack-pc-input').value = '0x01A2';
+            document.getElementById('stack-status-msg').innerText = "Stack reset to empty state.";
+        }
+
+        // ================= SIMULATOR 3: GPIO PORTB =================
+        let portState = [
+            { pin: 0, tris: 1, lat: 0, pullup: false },
+            { pin: 1, tris: 1, lat: 0, pullup: false },
+            { pin: 2, tris: 0, lat: 1, pullup: false },
+            { pin: 3, tris: 0, lat: 0, pullup: false },
+            { pin: 4, tris: 1, lat: 0, pullup: false },
+            { pin: 5, tris: 1, lat: 0, pullup: false },
+            { pin: 6, tris: 0, lat: 1, pullup: false },
+            { pin: 7, tris: 0, lat: 0, pullup: false },
+        ];
+        let globalPullups = false;
+
+        function renderGPIO() {
+            const grid = document.getElementById('gpio-pins-grid');
+            grid.innerHTML = '';
+
+            portState.forEach((item, idx) => {
+                const isOutput = item.tris === 0;
+                let actualVal = isOutput ? item.lat : (globalPullups ? 1 : item.lat);
+
+                const card = document.createElement('div');
+                card.className = "bg-brand-dark p-3 rounded-xl border border-brand-border space-y-2 flex flex-col items-center";
+
+                card.innerHTML = `
+                    <span class="font-mono text-xs font-bold text-slate-300">RB${idx}</span>
+                    
+                    <!-- LED Indicator -->
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center border ${
+                        actualVal === 1 
+                        ? 'bg-brand-accent border-brand-accent shadow-lg shadow-brand-accent/50 text-black font-bold text-xs' 
+                        : 'bg-brand-card border-brand-border text-slate-600'
+                    }">
+                        ${actualVal}
+                    </div>
+
+                    <!-- TRIS Switch -->
+                    <button onclick="toggleTRIS(${idx})" class="w-full py-1 text-[10px] font-mono rounded font-bold ${
+                        isOutput ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                    }">
+                        TRIS=${item.tris} (${isOutput ? 'OUT' : 'IN'})
+                    </button>
+
+                    <!-- Pin Input Toggle -->
+                    <button onclick="togglePinVal(${idx})" class="w-full py-1 text-[10px] rounded bg-brand-card hover:bg-brand-border text-slate-300">
+                        ${isOutput ? 'Out LAT=' + item.lat : 'Input Pin'}
+                    </button>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleTRIS(idx) {
+            portState[idx].tris = portState[idx].tris === 0 ? 1 : 0;
+            renderGPIO();
+        }
+
+        function togglePinVal(idx) {
+            portState[idx].lat = portState[idx].lat === 0 ? 1 : 0;
+            renderGPIO();
+        }
+
+        function togglePullups() {
+            globalPullups = !globalPullups;
+            const btn = document.getElementById('pullup-toggle-btn');
+            btn.innerText = globalPullups ? "ENABLED (5V)" : "DISABLED";
+            btn.className = globalPullups 
+                ? "px-3 py-1 rounded-lg bg-brand-accent text-black font-mono text-xs font-bold" 
+                : "px-3 py-1 rounded-lg bg-brand-card border border-brand-border text-slate-400 font-mono text-xs";
+            renderGPIO();
+        }
+
+        // ================= SIMULATOR 4: COMM SIMULATOR =================
+        function startCommSim() {
+            const byteStr = document.getElementById('comm-byte-input').value;
+            const val = parseInt(byteStr, 16) || 0xA5;
+            const binVal = val.toString(2).padStart(8, '0');
+
+            // Reset Displays
+            document.getElementById('serial-received-bits').innerText = "Received bits: ";
+            document.getElementById('parallel-received-bits').innerText = "Received bits: ";
+
+            // Parallel Sim (Instant)
+            document.getElementById('parallel-status').innerText = "Transmitted!";
+            document.getElementById('parallel-received-bits').innerText = "Received bits: " + binVal.split('').join(' ');
+
+            // Serial Sim (Step-by-step animation)
+            let bitIdx = 0;
+            const node = document.getElementById('serial-bit-node');
+            node.classList.remove('hidden');
+            document.getElementById('serial-status').innerText = "Transmitting...";
+
+            const interval = setInterval(() => {
+                if (bitIdx < 8) {
+                    const currentBit = binVal[bitIdx];
+                    node.innerText = currentBit;
+                    document.getElementById('serial-received-bits').innerText += currentBit + ' ';
+                    bitIdx++;
+                } else {
+                    clearInterval(interval);
+                    node.classList.add('hidden');
+                    document.getElementById('serial-status').innerText = "Finished!";
+                }
+            }, 400);
+        }
+
+        // ================= QUIZ SYSTEM =================
+        const quizQuestions = [
+            {
+                q: "What does the 'W' designation in Microchip PIC microcontrollers stand for?",
+                options: ["Word Register", "Working Register", "Write Register", "Wave Register"],
+                correct: 1,
+                exp: "W stands for Working Register, which serves as the Accumulator in PIC ALU operations."
+            },
+            {
+                q: "Which STATUS register flag is set to '1' when an ALU operation result is zero?",
+                options: ["C (Carry)", "DC (Digit Carry)", "Z (Zero)", "STATUS_0"],
+                correct: 2,
+                exp: "The Z (Zero) flag is set to 1 when the ALU calculation result equals zero."
+            },
+            {
+                q: "How many hardware stack levels are present in PIC microcontrollers?",
+                options: ["4 levels", "8 levels", "16 levels", "Unlimited levels"],
+                correct: 1,
+                exp: "PIC microcontrollers feature an 8-level deep hardware stack of 13-bit registers."
+            },
+            {
+                q: "Which bit value in a TRIS direction register configures a pin as an OUTPUT?",
+                options: ["Bit value '0'", "Bit value '1'", "Bit value 'HIGH'", "Bit value 'LOW'"],
+                correct: 0,
+                exp: "TRIS bit = '0' configures the pin as an Output, whereas '1' configures it as an Input."
+            },
+            {
+                q: "What is the fixed Interrupt Vector address in PIC microcontrollers?",
+                options: ["0000h", "0004h", "00FFh", "1FFFh"],
+                correct: 1,
+                exp: "Upon an interrupt event, execution branches immediately to address 0004h in program memory."
+            },
+            {
+                q: "How long can data be retained in the on-chip EEPROM memory?",
+                options: ["5 years", "10 years", "40 years", "100 years"],
+                correct: 2,
+                exp: "According to Microchip, non-volatile EEPROM data retention is up to 40 years across 1,000,000 write cycles."
+            }
+        ];
+
+        let userAnswers = {};
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+
+            quizQuestions.forEach((q, idx) => {
+                const qEl = document.createElement('div');
+                qEl.className = "p-5 rounded-xl bg-brand-dark border border-brand-border space-y-3";
+
+                let optionsHTML = '';
+                q.options.forEach((opt, optIdx) => {
+                    const isSelected = userAnswers[idx] === optIdx;
+                    optionsHTML += `
+                        <button onclick="selectQuizAnswer(${idx}, ${optIdx})" class="w-full text-left p-3 rounded-lg text-xs font-medium transition-all ${
+                            isSelected 
+                            ? 'bg-brand-accent text-black font-bold' 
+                            : 'bg-brand-card hover:bg-brand-border text-slate-300'
+                        }">
+                            ${String.fromCharCode(65 + optIdx)}) ${opt}
+                        </button>
+                    `;
+                });
+
+                let feedbackHTML = '';
+                if (userAnswers[idx] !== undefined) {
+                    const isCorrect = userAnswers[idx] === q.correct;
+                    feedbackHTML = `
+                        <div class="mt-2 p-3 rounded-lg text-xs font-mono ${isCorrect ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/10 text-red-400 border border-red-500/30'}">
+                            <strong>${isCorrect ? 'Correct!' : 'Incorrect!'}</strong> ${q.exp}
+                        </div>
+                    `;
+                }
+
+                qEl.innerHTML = `
+                    <div class="text-sm font-bold text-white">${idx + 1}. ${q.q}</div>
+                    <div class="space-y-2">${optionsHTML}</div>
+                    ${feedbackHTML}
+                `;
+
+                container.appendChild(qEl);
+            });
+
+            updateScore();
+        }
+
+        function selectQuizAnswer(qIdx, optIdx) {
+            userAnswers[qIdx] = optIdx;
+            renderQuiz();
+        }
+
+        function updateScore() {
+            let correctCount = 0;
+            Object.keys(userAnswers).forEach(qIdx => {
+                if (userAnswers[qIdx] === quizQuestions[qIdx].correct) {
+                    correctCount++;
+                }
+            });
+            document.getElementById('quiz-score').innerText = `${correctCount} / ${quizQuestions.length}`;
+        }
+
+        function resetQuiz() {
+            userAnswers = {};
+            renderQuiz();
+        }
+
+        // Initialize on Load
+        window.onload = function() {
+            renderStack();
+            renderGPIO();
+            renderQuiz();
+            runALU();
+        };
+    </script>
+</body>
+</html>
